@@ -44,246 +44,71 @@ requestAnimationFrame(animationEngine);
 // canvas:canvas,
 // panel:panel,
 // dials: [ [ dialSVG, deg, degPerFrame, bpm, btsPerCyc ] ],
-// pulsecycles:[
-//   pie,
-//   btCyclesArr:[ cycle:[ btMarkerLoc_dict:{deg, x1, y1, x2, y2, triggerGate} ] ],
-//   btMarkersSVGsArr:[ btMarkerSVG:[svg,deg] ]
+// pulseCycleArr[
+//  pie,
+//  dataArr: [ dict:{deg, x1, y1, x2, y2, triggerGate, svgline} ],
+// tnumTicksInFirstCyc,
+// addTickIx,
+// removeTickIx,
 // ]
 
 // </editor-fold> ----
 // ANIMATE BEAT MARKERS -----------------------------
-var t = true;
-// if(t)console.log(currDegsAllDials);t=false;
 function animateBtMarkers(noix) {
-  // Get Current deg for all dials
-  var tcurrDeg = notationObjects[noix]['dials'][0][1];
-  // Get Curr Cycle
-  var tcurrCyc;
-  for (var i = 1; i < cycleStartDegs.length; i++) {
-    if (tcurrDeg >= cycleStartDegs[i - 1] && tcurrDeg < cycleStartDegs[i]) {
-      tcurrCyc = i - 1;
-      break;
-    }
-  }
+  // Get Current deg  and x/y for all dials
+  var t_currDeg = notationObjects[noix]['dials'][0][1];
+  var tdialx1 = notationObjects[noix]['dials'][0][0].getAttribute('x1');
+  var tdialy1 = notationObjects[noix]['dials'][0][0].getAttribute('y1');
   // MAIN LOOP
+  // START HERE TROUBLE SHOOT - MAYBE RETHINK CYCLE IDEA JUST LONG LIST OF TICK DEGREE & LOCATIONS NO CYCLES
   for (var i = 0; i < notationObjects[noix]['pulsecycles'].length; i++) {
-    // Get current cycle of beatMarkers
-    var tcurrBtCyclesArr = notationObjects[noix]['pulsecycles'][i][1][tcurrCyc];
-    for (var j = 0; j < tcurrBtCyclesArr.length; j++) {
-      if (tcurrBtCyclesArr[j]['triggerGate']) {
-        //START HERE WAND/BEATMARKER COLLISION 
-        // var tbBox = 2;
-        //       var tMinX2a = tMinX2 - tbBox;
-        //       var tMinX2b = tMinX2 + tbBox;
-        //       var tMinY2a = tMinY2 - tbBox;
-        //       var tMinY2b = tMinY2 + tbBox;
-        //       var tminVec = new Victor(tMinX2, tMinY2);
-        //       var tdist = Math.abs(tdialVec.distance(tminVec));
-        //       // MINUTE/BEAT EVENTS TRIGGER
-        //       if (tx2 >= tMinX2a && tx2 <= tMinX2b && ty2 >= tMinY2a && ty2 <= tMinY2b) {
-        //         notationObjects[key][5][i][2] = false; //close gate
-        //         if (i != 0) {
-        //           notationObjects[key][5][i - 1][2] = true; //open previous gate
-        //           for (var j = 0; j < markersOn.length; j++) {
-        //             if (markersOn[j][1] == (i - 1)) {
-        //               notationObjects[key][5][i - 1][0].setAttributeNS(null, "stroke-width", "2");
-        //               markersOn.splice(j, 1);
-        //             }
-        //           }
-        //         } else {
-        //           notationObjects[key][5][notationObjects[key][5].length - 1][2] = true; //open previous gate
-        //           for (var j = 0; j < markersOn.length; j++) {
-        //             if (markersOn[j][1] == (notationObjects[key][5].length - 1)) {
-        //               notationObjects[key][5][notationObjects[key][5].length - 1][0].setAttributeNS(null, "stroke-width", "2");
-        //               markersOn.splice(j, 1);
-        //             }
-        //           }
-        //         }
-        //         // EVENTS //////////////////////////
-        //         markersOn.push([key, i, currTimeMS]);
-        //         break;
-        //       }
-        //     }
-        //   }
-        //   tlastDeg = t_currDeg;
-
-      }
-    }
-  }
-
-  /*
-// COLLITION DETECTION FIRST
-//     if (tgate) {
-//       var tminSvg = notationObjects[key][5][i][0];
-//       var tMinX2 = parseFloat(tminSvg.getAttribute('x2'));
-//       var tMinY2 = parseFloat(tminSvg.getAttribute('y2'));
-//       var tbBox = 2;
-//       var tMinX2a = tMinX2 - tbBox;
-//       var tMinX2b = tMinX2 + tbBox;
-//       var tMinY2a = tMinY2 - tbBox;
-//       var tMinY2b = tMinY2 + tbBox;
-//       var tminVec = new Victor(tMinX2, tMinY2);
-//       var tdist = Math.abs(tdialVec.distance(tminVec));
-//       // MINUTE/BEAT EVENTS TRIGGER
-//       if (tx2 >= tMinX2a && tx2 <= tMinX2b && ty2 >= tMinY2a && ty2 <= tMinY2b) {
-//         notationObjects[key][5][i][2] = false; //close gate
-//         if (i != 0) {
-//           notationObjects[key][5][i - 1][2] = true; //open previous gate
-//           for (var j = 0; j < markersOn.length; j++) {
-//             if (markersOn[j][1] == (i - 1)) {
-//               notationObjects[key][5][i - 1][0].setAttributeNS(null, "stroke-width", "2");
-//               markersOn.splice(j, 1);
-//             }
-//           }
-//         } else {
-//           notationObjects[key][5][notationObjects[key][5].length - 1][2] = true; //open previous gate
-//           for (var j = 0; j < markersOn.length; j++) {
-//             if (markersOn[j][1] == (notationObjects[key][5].length - 1)) {
-//               notationObjects[key][5][notationObjects[key][5].length - 1][0].setAttributeNS(null, "stroke-width", "2");
-//               markersOn.splice(j, 1);
-//             }
-//           }
-//         }
-//         // EVENTS //////////////////////////
-//         markersOn.push([key, i, currTimeMS]);
-//         break;
-//       }
-//     }
-//   }
-//   tlastDeg = t_currDeg;
-// }
-
-
-  // Get Current deg for all dials
-  // Note: Can have cascading pulse cycles and one dial or
-  // cycle length pulse cycle with multiple dials
-  // BUT NOT BOTH
-  /*
-  var tcurrDeg = notationObjects[noix]['dials'][0][1];
-  // Get Curr Cycle
-  var tcurrCyc;
-  for (var i = 1; i < cycleStartDegs.length; i++) {
-    if (tcurrDeg >= cycleStartDegs[i - 1] && tcurrDeg < cycleStartDegs[i]) {
-      tcurrCyc = i - 1;
-      break;
-    }
-  }
-  // Update beatMarker locations - update previous marker
-  //// Count back; Go back to previous cycle if necessary
-  //// When you get to begining of next cycle, you have to add
-  //// The last mark of your cycle to the end + any ADDITIONAL
-  //// marks since the last one you added
-  // <editor-fold -> NOTATION OBJECTS DICTIONARY LEGEND <-
-  // notationObjects -> {
-  // ix:ix,
-  // canvas:canvas,
-  // panel:panel,
-  // dials: [ [ dialSVG, deg, degPerFrame, bpm, btsPerCyc ] ],
-  // pulsecycles:[
-  //   pie,
-  //   btCyclesArr:[ cycle:[ btMarkerLoc_dict:{deg, x1, y1, x2, y2} ] ],
-  //   btMarkersSVGsArr:[ btMarkerSVG:[svg,deg] ]
-  // ]
-
-  // </editor-fold> ----
-  if (tcurrCyc > 0) {
-    for (var i = 0; i < notationObjects[noix]['pulsecycles'].length; i++) {
-      // Get current cycle of beatMarkers
-      var tcurrBtCyclesArr = notationObjects[noix]['pulsecycles'][i][1][tcurrCyc];
-      // Find out which tick you are on
-      var tticknum = 0;
-      for (var j = 1; j < tcurrBtCyclesArr.length; j++) {
-        if (tcurrDeg >= tcurrBtCyclesArr[j - 1]['deg'] && tcurrDeg < tcurrBtCyclesArr[j]['deg']) {
-          tticknum = j - 1;
+    var t_pcR = notationObjects[noix]['pulsecycles'][i][0].getAttribute('r');
+    var t_halfCyc = notationObjects[noix]['pulsecycles'][i][2] / 2;
+    var t_tickIxToAdd = notationObjects[noix]['pulsecycles'][i][3]; //initially next tick after first cycle then incremented
+    var t_tickIxToRmv = notationObjects[noix]['pulsecycles'][i][4]; // then incremented
+    var tdialx2 = (t_pcR * Math.cos(rads(t_currDeg))) + parseFloat(tdialx1);
+    var tdialy2 = (t_pcR * Math.sin(rads(t_currDeg))) + parseFloat(tdialy1);
+    var t_tickArray = notationObjects[noix]['pulsecycles'][i][1];
+    // COLLISION DETECTION
+    for (var j = 0; j < t_tickArray.length; j++) {
+      var t_tickDeg = t_tickArray[j]['deg'];
+      if (t_tickDeg <= t_currDeg && t_tickDeg >= (t_currDeg - 360)) {
+        if (t_tickArray[j]['triggerGate']) { //to keep tick from being triggered more than once
+          var tbBox = 2; // size of bounding box around tick for detection
+          var tx2a = t_tickArray[j]['x1'] - tbBox;
+          var tx2b = t_tickArray[j]['x1'] + tbBox;
+          var ty2a = t_tickArray[j]['y1'] - tbBox;
+          var ty2b = t_tickArray[j]['y1'] + tbBox;
+          // collision detection
+          if (tdialx2 >= tx2a && tdialx2 < tx2b && tdialy2 >= ty2a && tdialy2 < ty2b) {
+            t_tickArray[j]['triggerGate'] = false;
+            console.log(j);
+            //grow current tick
+            var tcurrTickSVG = t_tickArray[j]['svgline'];
+            tcurrTickSVG.setAttributeNS(null, "stroke-width", "8");
+            if (j > 0) {
+              //restore previous tick to thin size
+              var tprevTickSVG = t_tickArray[j - 1]['svgline'];
+              tprevTickSVG.setAttributeNS(null, "stroke-width", "2");
+            }
+            if (j > t_halfCyc) {
+              // delete tick half cycle ago
+              var t_tickToRemove = document.getElementById(t_tickArray[t_tickIxToRmv]['svgline'].getAttribute('id'));
+              t_tickToRemove.parentNode.removeChild(t_tickToRemove);
+              t_tickIxToRmv++;
+              notationObjects[noix]['pulsecycles'][i][4] = t_tickIxToRmv;
+              //   //Add next tick
+              notationObjects[noix]['canvas'].appendChild(t_tickArray[t_tickIxToAdd]['svgline']);
+              t_tickIxToAdd++;
+              notationObjects[noix]['pulsecycles'][i][3] = t_tickIxToAdd;
+            }
+            break;
+          }
         }
       }
-      // For first tick in cycle need to update the previous tick
-      // which is the last tick in the previous cycle to
-      // the last tick in the current cycle
-      // figure out how to add additional ticks for longer cycles
-      if (tticknum != 0) {
-        //coordinates dict of previous tick in next cycle dict:{deg, x1, y1, x2, y2}
-        var tlocDict = notationObjects[noix]['pulsecycles'][i][1][tcurrCyc + 1][tticknum - 1];
-        var tdisGt = tlocDict['triggerGate'];
-        if (tdisGt) {
-          tlocDict['triggerGate'] = false;
-          //get svg of this tick
-          var ttickSvg = notationObjects[noix]['pulsecycles'][i][2][tticknum - 1][0];
-          //update previous tick's location
-          ttickSvg.setAttributeNS(null, "x1", tlocDict['x1']);
-          ttickSvg.setAttributeNS(null, "y1", tlocDict['y1']);
-          ttickSvg.setAttributeNS(null, "x2", tlocDict['x2']);
-          ttickSvg.setAttributeNS(null, "y2", tlocDict['y2']);
-        }
-      }
-      // if (tticknum == 0)
-      // else {
-      //   var tlastMkofCycIx = notationObjects[noix]['pulsecycles'][i][1][tcurrCyc].length - 1;
-      //   //coordinates dict of last tick in current cycle dict:{deg, x1, y1, x2, y2}
-      //   var tlocDict = notationObjects[noix]['pulsecycles'][i][1][tcurrCyc][tlastMkofCycIx];
-      //   //get svg of this last tick
-      //   var ttickSvg = notationObjects[noix]['pulsecycles'][i][2][tlastMkofCycIx][0];
-      //   //update previous tick's location
-      //   ttickSvg.setAttributeNS(null, "x1", tlocDict['x1']);
-      //   ttickSvg.setAttributeNS(null, "y1", tlocDict['y1']);
-      //   ttickSvg.setAttributeNS(null, "x2", tlocDict['x2']);
-      //   ttickSvg.setAttributeNS(null, "y2", tlocDict['y2']);
-      // }
     }
   }
-  */
 }
-//   // MINUTE MARKER COLLITION
-//   for (var i = 0; i < notationObjects[noix]['pulsecycles'].length; i++) {
-//     var tpieSVG = notationObjects[noix]['pulsecycles'][i][0];
-//     var tbtCyclesArr = notationObjects[noix]['pulsecycles'][i][1];
-//     var tbtMarkersArr = notationObjects[noix]['pulsecycles'][i][2];
-//     // Determine which cycle you are on
-//
-//
-//
-//
-//     var tgate = notationObjects[key][5][i][2];
-//     if (tgate) {
-//       var tminSvg = notationObjects[key][5][i][0];
-//       var tMinX2 = parseFloat(tminSvg.getAttribute('x2'));
-//       var tMinY2 = parseFloat(tminSvg.getAttribute('y2'));
-//       var tbBox = 2;
-//       var tMinX2a = tMinX2 - tbBox;
-//       var tMinX2b = tMinX2 + tbBox;
-//       var tMinY2a = tMinY2 - tbBox;
-//       var tMinY2b = tMinY2 + tbBox;
-//       var tminVec = new Victor(tMinX2, tMinY2);
-//       var tdist = Math.abs(tdialVec.distance(tminVec));
-//       // MINUTE/BEAT EVENTS TRIGGER
-//       if (tx2 >= tMinX2a && tx2 <= tMinX2b && ty2 >= tMinY2a && ty2 <= tMinY2b) {
-//         notationObjects[key][5][i][2] = false; //close gate
-//         if (i != 0) {
-//           notationObjects[key][5][i - 1][2] = true; //open previous gate
-//           for (var j = 0; j < markersOn.length; j++) {
-//             if (markersOn[j][1] == (i - 1)) {
-//               notationObjects[key][5][i - 1][0].setAttributeNS(null, "stroke-width", "2");
-//               markersOn.splice(j, 1);
-//             }
-//           }
-//         } else {
-//           notationObjects[key][5][notationObjects[key][5].length - 1][2] = true; //open previous gate
-//           for (var j = 0; j < markersOn.length; j++) {
-//             if (markersOn[j][1] == (notationObjects[key][5].length - 1)) {
-//               notationObjects[key][5][notationObjects[key][5].length - 1][0].setAttributeNS(null, "stroke-width", "2");
-//               markersOn.splice(j, 1);
-//             }
-//           }
-//         }
-//         // EVENTS //////////////////////////
-//         markersOn.push([key, i, currTimeMS]);
-//         break;
-//       }
-//     }
-//   }
-//   tlastDeg = t_currDeg;
-// }
-
 // MAKE NOTATION OBJECT -----------------------------
 function mkNotationObject(ix, type, x, y, w, h, title, bpm, btsPerCyc) {
   var tno = {};
@@ -311,9 +136,10 @@ function mkNotationObject(ix, type, x, y, w, h, title, bpm, btsPerCyc) {
 function mkpulsecycle(ix, pcix, w, h, canvas, ringnum, ringsz, btsPerCyc, ratioToBaseline) {
   //pulseCycleArr[
   //  pie,
-  ////// each cycle is an array of dictionaries //////
-  //  btCyclesArr:[ cycle:[ btMarkerLoc_dict:{deg, x1, y1, x2, y2, triggerGate} ] ],
-  //  btMarkersSVGsArr:[ btMarkerSVG:[svg,deg] ]
+  //  dataArr: [ dict:{deg, x1, y1, x2, y2, triggerGate, svgline} ],
+  // tnumTicksInFirstCyc,
+  // addTickIx,
+  // removeTickIx,
   // ]
   var pulseCycleArr = [];
   // MAKE PIE -------------------- >
@@ -330,92 +156,45 @@ function mkpulsecycle(ix, pcix, w, h, canvas, ringnum, ringsz, btsPerCyc, ratioT
   tcirc.setAttributeNS(null, "fill", "none");
   var tpieid = "no" + ix.toString() + "pcCirc" + pcix.toString();
   tcirc.setAttributeNS(null, "id", tpieid);
-  // canvas.appendChild(tcirc);
   pulseCycleArr.push(tcirc);
   // MAKE Beat Markers ----------- >
-  // Generate long array of degrees
+  // Generate long array with a dict of degrees, x, y and svg
   var tdegPerBt = (360 / btsPerCyc) * ratioToBaseline;
-  var tbtDegLocs = [];
-  for (var i = 0; i < 9999; i++) {
-    tbtDegLocs.push(-90 + (tdegPerBt * i));
-  }
-  // Organize into cycles
-  var tcycix = 1;
-  var tbtCycles = [];
-  var tbtcyc = [];
-  for (var i = 0; i < tbtDegLocs.length; i++) {
-    if (tbtDegLocs[i] < cycleStartDegs[tcycix]) {
-      var tbtLocAr = {}; //[deg, x1, y1, x2, y2]
-      var tdeg = tbtDegLocs[i];
-      tbtLocAr['deg'] = tdeg;
-      tbtLocAr['x1'] = tr * Math.cos(rads(tdeg)) + tcx;
-      tbtLocAr['y1'] = tr * Math.sin(rads(tdeg)) + tcy;
-      tbtLocAr['x2'] = (tr - ringsz) * Math.cos(rads(tdeg)) + tcx;
-      tbtLocAr['y2'] = (tr - ringsz) * Math.sin(rads(tdeg)) + tcy;
-      tbtcyc.push(tbtLocAr);
-    } else {
-      tbtCycles.push(tbtcyc);
-      tbtcyc = [];
-      tcycix++;
-      var tbtLocAr = {}; //[deg, x1, y1, x2, y2]
-      var tdeg = tbtDegLocs[i];
-      tbtLocAr['deg'] = tdeg;
-      tbtLocAr['x1'] = tr * Math.cos(rads(tdeg)) + tcx;
-      tbtLocAr['y1'] = tr * Math.sin(rads(tdeg)) + tcy;
-      tbtLocAr['x2'] = (tr - ringsz) * Math.cos(rads(tdeg)) + tcx;
-      tbtLocAr['y2'] = (tr - ringsz) * Math.sin(rads(tdeg)) + tcy;
-      tbtLocAr['triggerGate'] = true;
-      tbtcyc.push(tbtLocAr);
-    }
-  }
-  pulseCycleArr.push(tbtCycles);
-  // CREATE MAX NUMBER OF SVG LINES & DRAW FIRST CYCLE -- >
-  // Find max number of beat markers per cycle
-  var tmaxNumBtsPerCyc = 0;
-  var tbtMarkersSVGs = [];
-  //Find the max beats of any cycle
-  for (var i = 0; i < tbtCycles.length; i++) {
-    if (tbtCycles[i].length > tmaxNumBtsPerCyc) tmaxNumBtsPerCyc = tbtCycles[i].length;
-  }
-  // Make first cycle of beat markers
-  for (var i = 0; i < tbtCycles[0].length; i++) {
-    var btMarkerArr = [];
+  var ttickDataArr = [];
+  for (var i = 0; i < 39600; i++) {
+    var ttickDict = {}; //[deg, x1, y1, x2, y2]
+    var tdeg = -90 + (tdegPerBt * i);
+    var tx1 = tr * Math.cos(rads(tdeg)) + tcx;
+    var ty1 = tr * Math.sin(rads(tdeg)) + tcy;
+    var tx2 = (tr - ringsz) * Math.cos(rads(tdeg)) + tcx;
+    var ty2 = (tr - ringsz) * Math.sin(rads(tdeg)) + tcy;
+    ttickDict['deg'] = tdeg;
+    ttickDict['x1'] = tx1;
+    ttickDict['y1'] = ty1;
+    ttickDict['x2'] = tx2;
+    ttickDict['y2'] = ty2;
+    ttickDict['triggerGate'] = true;
     var tbeatMarker = document.createElementNS(SVG_NS, "line");
-    tbeatMarker.setAttributeNS(null, "x1", tbtCycles[0][i].x1);
-    tbeatMarker.setAttributeNS(null, "y1", tbtCycles[0][i].y1);
-    tbeatMarker.setAttributeNS(null, "x2", tbtCycles[0][i].x2);
-    tbeatMarker.setAttributeNS(null, "y2", tbtCycles[0][i].y2);
+    tbeatMarker.setAttributeNS(null, "x1", tx1);
+    tbeatMarker.setAttributeNS(null, "y1", ty1);
+    tbeatMarker.setAttributeNS(null, "x2", tx2);
+    tbeatMarker.setAttributeNS(null, "y2", ty2);
     tbeatMarker.setAttributeNS(null, "stroke", "rgb(255, 131, 0)");
     tbeatMarker.setAttributeNS(null, "stroke-width", 2);
     var tbeatMarkerid = "no" + ix.toString() + "pc" + pcix + "bmkr" + i;
     tbeatMarker.setAttributeNS(null, "id", tbeatMarkerid);
-    tbeatMarker.setAttributeNS(null, 'visibility', 'visible');
-    canvas.appendChild(tbeatMarker);
-    btMarkerArr.push(tbeatMarker);
-    btMarkerArr.push(tdeg);
-    tbtMarkersSVGs.push(btMarkerArr);
+    ttickDict['svgline'] = tbeatMarker;
+    ttickDataArr.push(ttickDict);
   }
-  // Create any additional marker lines and make invisible
-  var tnumExtraMarks = tmaxNumBtsPerCyc - tbtCycles[0].length;
-  for (var i = 0; i < tnumExtraMarks; i++) {
-    var btMarkerArr = [];
-    var tbeatMarker = document.createElementNS(SVG_NS, "line");
-    tbeatMarker.setAttributeNS(null, "x1", tbtCycles[0][0].x1);
-    tbeatMarker.setAttributeNS(null, "y1", tbtCycles[0][0].y1);
-    tbeatMarker.setAttributeNS(null, "x2", tbtCycles[0][0].x2);
-    tbeatMarker.setAttributeNS(null, "y2", tbtCycles[0][0].y2);
-    tbeatMarker.setAttributeNS(null, "stroke", "rgb(255, 131, 0)");
-    tbeatMarker.setAttributeNS(null, "stroke-width", 2);
-    var tix = i + tbtCycles[0].length - 1;
-    var tbeatMarkerid = "no" + ix.toString() + "pc" + pcix + "bmkr" + tix;
-    tbeatMarker.setAttributeNS(null, "id", tbeatMarkerid);
-    t_notationSVG.setAttributeNS(null, 'visibility', 'hidden');
-    canvas.appendChild(tbeatMarker);
-    btMarkerArr.push(tbeatMarker);
-    btMarkerArr.push(tdeg);
-    tbtMarkersSVGs.push(btMarkerArr);
+  pulseCycleArr.push(ttickDataArr);
+  //draw first cycle
+  var tnumTicksInFirstCyc = Math.ceil(360 / tdegPerBt);
+  pulseCycleArr.push(tnumTicksInFirstCyc);
+  pulseCycleArr.push(tnumTicksInFirstCyc);
+  pulseCycleArr.push(0);
+  for (var i = 0; i < tnumTicksInFirstCyc; i++) {
+    canvas.appendChild(ttickDataArr[i]['svgline'])
   }
-  pulseCycleArr.push(tbtMarkersSVGs);
   canvas.appendChild(tcirc); //so circ draws over btMarkers
   return pulseCycleArr;
 }
@@ -544,75 +323,9 @@ function startClockSync() {
 
 
 
-// var tlastDeg = 0;
-// var t = true;
-// var markersOn = [];
-// var markerDur = 80;
-// var bigMarkerSz = 9;
-// // FUNCTION: minMarkerAnime -------------------------------------------------- //
-// function minMarkerAnime(currtime) {
-//   for (var i = 0; i < markersOn.length; i++) {
-//     var tnoKey = markersOn[i][0];
-//     var tmarkerNo = markersOn[i][1];
-//     var tmkStTime = markersOn[i][2];
-//     var tTimeElapsed = currtime - tmkStTime;
-//     if (tTimeElapsed < markerDur) {
-//       var tteNorm = scale(tTimeElapsed, 0, markerDur, 2, bigMarkerSz);
-//       notationObjects[tnoKey][5][tmarkerNo][0].setAttributeNS(null, "stroke-width", tteNorm.toString());
-//     }
-//   }
-// }
-
-
-//     // MINUTE MARKER COLLITION
-//     for (var i = 0; i < notationObjects[key][5].length; i++) {
-//       var tgate = notationObjects[key][5][i][2];
-//       if (tgate) {
-//         var tminSvg = notationObjects[key][5][i][0];
-//         var tMinX2 = parseFloat(tminSvg.getAttribute('x2'));
-//         var tMinY2 = parseFloat(tminSvg.getAttribute('y2'));
-//         var tbBox = 2;
-//         var tMinX2a = tMinX2 - tbBox;
-//         var tMinX2b = tMinX2 + tbBox;
-//         var tMinY2a = tMinY2 - tbBox;
-//         var tMinY2b = tMinY2 + tbBox;
-//         var tminVec = new Victor(tMinX2, tMinY2);
-//         var tdist = Math.abs(tdialVec.distance(tminVec));
-//         // MINUTE/BEAT EVENTS TRIGGER
-//         if (tx2 >= tMinX2a && tx2 <= tMinX2b && ty2 >= tMinY2a && ty2 <= tMinY2b) {
-//           notationObjects[key][5][i][2] = false; //close gate
-//           if (i != 0) {
-//             notationObjects[key][5][i - 1][2] = true; //open previous gate
-//             for (var j = 0; j < markersOn.length; j++) {
-//               if (markersOn[j][1] == (i - 1)) {
-//                 notationObjects[key][5][i - 1][0].setAttributeNS(null, "stroke-width", "2");
-//                 markersOn.splice(j, 1);
-//               }
-//             }
-//           } else {
-//             notationObjects[key][5][notationObjects[key][5].length - 1][2] = true; //open previous gate
-//             for (var j = 0; j < markersOn.length; j++) {
-//               if (markersOn[j][1] == (notationObjects[key][5].length - 1)) {
-//                 notationObjects[key][5][notationObjects[key][5].length - 1][0].setAttributeNS(null, "stroke-width", "2");
-//                 markersOn.splice(j, 1);
-//               }
-//             }
-//           }
-//           // EVENTS //////////////////////////
-//           markersOn.push([key, i, currTimeMS]);
-//           break;
-//         }
-//       }
-//     }
-//     tlastDeg = t_currDeg;
-//   }
-//   //animate minute markers
-//   minMarkerAnime(currTimeMS)
-//   framect++;
-
-
 /* NOTES
-
+var t = true;
+// if(t)console.log(currDegsAllDials);t=false;
 // Note: Can have cascading pulse cycles and one dial or
 // cycle length pulse cycle with multiple dials
 // BUT NOT BOTH
@@ -620,8 +333,8 @@ function startClockSync() {
 /*
 BEAT MARKER ANIMATION
 ANIMATE DIAL TO GLOW EACH BEAT
-ADD ADDITIONAL PULSE CYCLES
-MOVING MARKERS EACH CYCLE
+ADD ADDITIONAL PULSE CYCLES - DIFFERENT COLOR TICKS
+ADD SUBDIVISION
 Practice it
 Resize later
 
