@@ -18,7 +18,7 @@ var lastFrameTimeMs = 0.0;
 var notationObjects = [];
 var notationObjectsIx = 0;
 var cycleStartDegs = [];
-for (var i = 0; i < 9999; i++) {
+for (var i = 0; i < 99999; i++) {
   cycleStartDegs.push(-90 + (360 * i));
 }
 // ANIMATIONS -------------- >
@@ -33,7 +33,7 @@ var ts = timesync.create({
   interval: 1000
 });
 // 02 MAKE NOTATION OBJECTS ------ >
-mkNotationObject(0, ['pulsecycle', 25, 60], 200, 100, 280, 280, 'Pulse Cycle 9:13:21', 52, 10);
+mkNotationObject(0, ['pulsecycle', 25, 60], 200, 100, 280, 280, 'Pulse Cycle 13:7:10.2', 52, 10);
 notationObjectsIx++;
 addpulsecycle(0, 25, (7/13), '#FFFF00');
 addpulsecycle(0, 25, (11/14), '#DF00FE');
@@ -217,7 +217,7 @@ function mkSVGcanvas(ix, w, h) {
 function mkpanel(ix, svgcanvas, posx, posy, w, h, title) {
   var tpanel;
   jsPanel.create({
-    // position: "left-top",
+    position: 'center-top',
     id: "panel" + ix,
     contentSize: w.toString() + " " + h.toString(),
     header: 'auto-show-hide',
@@ -390,10 +390,7 @@ var t = true;
 ADD SUBDIVISION
 practice with different note each tempo until fluid
 then try adding patterns
-BLINK RINGS
-BLINK PART OF WAND
-DROPPING BALLS IN CENTER
 Practice it
-Resize later
+Start Violin Piece
 
 */
