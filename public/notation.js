@@ -28,8 +28,8 @@ var dialBlinkDur = 200;
 // <editor-fold ******** START UP SEQUENCE ********************** //
 // 01 START TIME SYNC ENGINE ----- >
 var ts = timesync.create({
-  //server: 'https://safe-plateau-48516.herokuapp.com/timesync',
-  server: '/timesync',
+  server: 'https://morning-gorge-01005.herokuapp.com/timesync',
+  // server: '/timesync',
   interval: 1000
 });
 // 02 MAKE NOTATION OBJECTS ------ >
