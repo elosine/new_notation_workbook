@@ -1,0 +1,76 @@
+body {
+  background-color: #708090;
+  font-family: 'Lato';
+  margin: 0;
+  padding: 0;
+}
+/* General button style */
+.btn {
+  letter-spacing: 1px;
+  padding: 9px 9px;
+  margin: 9px 9px;
+  border: none;
+  font-family: 'Lato';
+  font-size: 13px;
+  color: inherit;
+  background: none;
+  display: inline-block;
+  font-variant: small-caps;
+  outline: none;
+  position: relative;
+  -webkit-transition: all 0.3s;
+  -moz-transition: all 0.3s;
+  transition: all 0.3s;
+}
+
+/* Button 1 */
+.btn-1 {
+  background: #cb4e4e;
+  color: #fff;
+  box-shadow: 0 6px #ab3c3c;
+  border-radius: 5px;
+  cursor: pointer;
+  -webkit-transition: none;
+  -moz-transition: none;
+  transition: none;
+}
+
+.btn-1_inactive {
+  background: #708090;
+  color: #fff;
+  box-shadow: 0 6px #708090;
+  border-radius: 5px;
+  -webkit-transition: none;
+  -moz-transition: none;
+  transition: none;
+}
+
+.btn-1:hover {
+  box-shadow: 0 8px #17954c;
+	background: #24b662;
+  color: black;
+  top: -2px;
+}
+
+.btn-1:active {
+  box-shadow: 0 0 #ab3c3c;
+  top: 6px;
+}
+
+.btn-2 {
+  background: #fcad26;
+  color: #fff;
+  box-shadow: 0 6px #da9622;
+  border-radius: 5px;
+  cursor: pointer;
+  -webkit-transition: none;
+  -moz-transition: none;
+  transition: none;
+}
+
+.btn-2:hover {
+  box-shadow: 0 8px #da9622;
+	background: #fcad26;
+  color: black;
+  top: -2px;
+}
