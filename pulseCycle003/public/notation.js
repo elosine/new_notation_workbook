@@ -12,31 +12,68 @@ var timeAdjustment = 0;
 var SVG_NS = "http://www.w3.org/2000/svg";
 var SVG_XLINK = 'http://www.w3.org/1999/xlink';
 // NOTATION SVGs ------------------ >
-var dial1, dial2;
-//// DIAL1 Notation Data ///////////////////////////////////
-//[url, w, h] //this gets generated in init from the files in motives
-var notationUrlSz1 = [];
-var motivePaths1 = [
-  "/notation/quintuplet_accent.svg",
-  "/notation/eight_accent_2ndPartial_27_34.svg",
-  "/notation/eight_accent_1stPartial_27_34.svg",
-  "/notation/triplet_accent_1st_partial_45_45.svg",
-  "/notation/quarter_accent_12_35.svg"
+var numDials = 2;
+var dials = [];
+//// DIAL Notation Data ///////////////////////////////////
+//[url, w, h] //this gets generated in init by getNotationSizes from the files in motives
+var notationUrlsDimensions = [];
+for (var i = 0; i < numDials; i++) notationUrlsDimensions.push([]);
+var motivePaths = [
+  [
+    "/notation/quintuplet_accent.svg",
+    "/notation/eight_accent_2ndPartial_27_34.svg",
+    "/notation/eight_accent_1stPartial_27_34.svg",
+    "/notation/triplet_accent_1st_partial_45_45.svg",
+    "/notation/quarter_accent_12_35.svg"
+  ],
+  [
+    "/notation/quadruplet_accent.svg",
+    "/notation/eight_accent_2ndPartial_27_34.svg",
+    "/notation/eight_accent_1stPartial_27_34.svg",
+    "/notation/triplet_accent_1st_partial_45_45.svg",
+    "/notation/quarter_accent_12_35.svg"
+  ]
 ];
-var motiveWeightingSet1 = [0.13, 0.13, 0.13, 0.13, 0.62];
-//// DIAL2 Notation Data ///////////////////////////////////
-var notationUrlSz2 = [];
-var motivePaths2 = [
-  "/notation/quadruplet_accent.svg",
-  "/notation/eight_accent_2ndPartial_27_34.svg",
-  "/notation/eight_accent_1stPartial_27_34.svg",
-  "/notation/triplet_accent_1st_partial_45_45.svg",
-  "/notation/quarter_accent_12_35.svg"
+
+
+
+
+function processImg(url) {
+  return new Promise((resolve, reject) => {
+    let img = new Image();
+    img.onload = () => resolve({
+      w: img.width,
+      h: img.height
+    });
+    img.onerror = reject;
+    img.src = url;
+  })
+}
+
+
+async function getImgDimensions(urls, arrayToPopulate) {
+  for (const [idx, url] of urls.entries()) {
+    var dimensions = await processImg(url);
+    var sizeArr = [];
+    sizeArr.push(url);
+    sizeArr.push(dimensions.w);
+    sizeArr.push(dimensions.h);
+    arrayToPopulate.push(sizeArr);
+  }
+  console.log(arrayToPopulate);
+}
+
+getImgDimensions(motivePaths[0], notationUrlsDimensions[0]);
+
+
+
+
+
+
+var motiveWeightingSets = [
+  [0.13, 0.13, 0.13, 0.13, 0.62],
+  [0.15, 0.3, 0.08, 0.08, 0.6]
 ];
-var motiveWeightingSet2 = [0.15, 0.3, 0.08, 0.08, 0.6];
-// DIAL NOTATION OBJECT ----------- >
-// EVENTS/ALGORITHIM ----------- >
-var eventData;
 // CONTROL PANEL ------------------ >
 var controlPanel;
 // BUTTONS ------------------------ >
@@ -74,9 +111,18 @@ function init() {
   // 01: MAKE CONTROL PANEL ---------------- >
   controlPanel = mkCtrlPanel("ctrlPanel", dialW, ctrlPanelH, "Control Panel");
   // 02: GET NOTATION SIZES ---------------- >
-  getNotationSizes(motivePaths1, notationUrlSz1, false);
-  getNotationSizes(motivePaths2, notationUrlSz2, true);
-  // 03: GENERATE STATIC ELEMENTS ---------------- >
+  //START HERE ....>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  for (var i = 0; i < numDials; i++) {
+    if (i != (numDials - 1)) {
+      getNotationSizes(motivePaths[i], notationUrlSz1[i], false);
+    } else {
+      getNotationSizes(motivePaths[i], notationUrlSz1[i], true);
+    }
+  }
+}
+// 03: GENERATE STATIC ELEMENTS ---------------- >
+//generate these from  getNotationSizes
+function makeDials() {
   dial1 = mkDialNO(0, dialW, dialH, 12, bpm, notationUrlSz1, 0.42, motiveWeightingSet1);
   dial2 = mkDialNO(1, dialW, dialH, 11, bpm, notationUrlSz2, 0.53, motiveWeightingSet2);
 }
@@ -214,6 +260,7 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
         notesArr.push(-1);
       }
     }
+    notationObj['notesArr'] = notesArr;
     return notesArr;
   }
   // </editor-fold>     END DIAL NOTATION OBJECT - GENERATE PIECE
@@ -517,8 +564,11 @@ function mkCtrlPanel(panelid, w, h, title) {
   saveBtn.addEventListener("click", function() {
     if (activateButtons) {
       if (activateSaveBtn) {
-        var eventDataStr = "";
-        for (var i = 0; i < eventData.length; i++) { // format as string to store in a file
+        var t_eventData1 = dial1.notesArr;
+        var t_eventData2 = dial2.notesArr;
+        var eventDataStr1 = "";
+        var eventDataStr2 = "";
+        for (var i = 0; i < eventData1.length; i++) { // format as string to store in a file
           if (i != (eventData.length - 1)) { //if it is not the last one
             if (eventData[i] == -1) {
               eventDataStr = eventDataStr + "-1;"; //not every tick has notation; if not = -1
@@ -796,6 +846,8 @@ function getNotationSizes(pathArr, emptyDestArr, activateButtonsFlag) {
       if (activateButtonsFlag) {
         if (ix == (pathArr.length - 1)) {
           activateButtons = true;
+          //make Dial objects and generate static elements
+          makeDials();
         }
       }
     });
