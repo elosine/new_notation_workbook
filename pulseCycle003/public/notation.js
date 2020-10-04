@@ -3,7 +3,7 @@
 var framect = 0;
 var delta = 0.0;
 var lastFrameTimeMs = 0.0;
-var bpm = 100;
+var bpm = 87;
 // TIMING ------------------------- >
 var FRAMERATE = 60.0;
 var MSPERFRAME = 1000.0 / FRAMERATE;
@@ -15,7 +15,7 @@ var SVG_XLINK = 'http://www.w3.org/1999/xlink';
 var numDials = 2;
 var dials = [];
 //// DIAL Notation Data ///////////////////////////////////
-//[url, w, h] //this gets generated in init by getNotationSizes from the files in motives
+//[url, w, h]
 var notationUrlsDimensions = [];
 for (var i = 0; i < numDials; i++) notationUrlsDimensions.push([]);
 var motivePaths = [
@@ -34,46 +34,12 @@ var motivePaths = [
     "/notation/quarter_accent_12_35.svg"
   ]
 ];
-
-
-
-
-function processImg(url) {
-  return new Promise((resolve, reject) => {
-    let img = new Image();
-    img.onload = () => resolve({
-      w: img.width,
-      h: img.height
-    });
-    img.onerror = reject;
-    img.src = url;
-  })
-}
-
-
-async function getImgDimensions(urls, arrayToPopulate) {
-  for (const [idx, url] of urls.entries()) {
-    var dimensions = await processImg(url);
-    var sizeArr = [];
-    sizeArr.push(url);
-    sizeArr.push(dimensions.w);
-    sizeArr.push(dimensions.h);
-    arrayToPopulate.push(sizeArr);
-  }
-  console.log(arrayToPopulate);
-}
-
-getImgDimensions(motivePaths[0], notationUrlsDimensions[0]);
-
-
-
-
-
-
 var motiveWeightingSets = [
-  [0.13, 0.13, 0.13, 0.13, 0.62],
-  [0.15, 0.3, 0.08, 0.08, 0.6]
+  [0.13, 0.13, 0.13, 0.13, 0.42],
+  [0.15, 0.3, 0.08, 0.08, 0.4]
 ];
+var numTicksPerDial = [12, 11];
+var useNotationProbabilities = [0.36, 0.42]
 // CONTROL PANEL ------------------ >
 var controlPanel;
 // BUTTONS ------------------------ >
@@ -111,20 +77,13 @@ function init() {
   // 01: MAKE CONTROL PANEL ---------------- >
   controlPanel = mkCtrlPanel("ctrlPanel", dialW, ctrlPanelH, "Control Panel");
   // 02: GET NOTATION SIZES ---------------- >
-  //START HERE ....>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  for (var i = 0; i < numDials; i++) {
-    if (i != (numDials - 1)) {
-      getNotationSizes(motivePaths[i], notationUrlSz1[i], false);
-    } else {
-      getNotationSizes(motivePaths[i], notationUrlSz1[i], true);
-    }
-  }
+  getImgDimensions(motivePaths, notationUrlsDimensions);
 }
 // 03: GENERATE STATIC ELEMENTS ---------------- >
-//generate these from  getNotationSizes
 function makeDials() {
-  dial1 = mkDialNO(0, dialW, dialH, 12, bpm, notationUrlSz1, 0.42, motiveWeightingSet1);
-  dial2 = mkDialNO(1, dialW, dialH, 11, bpm, notationUrlSz2, 0.53, motiveWeightingSet2);
+  for (var i = 0; i < numDials; i++) {
+    dials.push(mkDialNO(i, dialW, dialH, numTicksPerDial[i], bpm, notationUrlsDimensions[i], useNotationProbabilities[i], motiveWeightingSets[i]));
+  }
 }
 // FUNCTION: startClockSync ------------------------------- //
 function startClockSync() {
@@ -415,11 +374,12 @@ function mkCtrlPanel(panelid, w, h, title) {
   generateNotationButton.style.left = "0px";
   generateNotationButton.addEventListener("click", function() {
     if (activateButtons) {
-      var newNotation1 = dial1.generateNotesArr();
-      var newNotation2 = dial2.generateNotesArr();
+      var newNotationArr = [];
+      dials.forEach( (it, ix) => {
+        newNotationArr.push( it.generateNotesArr() );
+      });
       socket.emit('createEvents', {
-        eventdata1: newNotation1,
-        eventdata2: newNotation2
+        eventDataArr: newNotationArr
       });
     }
   });
@@ -721,11 +681,10 @@ socket.on('startpiecebroadcast', function(data) {
 
 // <editor-fold>       <<<< SOCKET IO - CREATE EVENTS >>>> ------ //
 socket.on('createEventsBroadcast', function(data) {
-  eventData1 = data.eventdata1;
-  eventData2 = data.eventdata2;
-  dial1.generateNotation(eventData1);
-  dial2.generateNotation(eventData2);
-
+  var eventDataArr = data.eventDataArr;
+  eventDataArr.forEach( (it,ix) => {
+    dials[ix].generateNotation(it);
+  });
   if (startPieceGate) {
     activateStartBtn = true;
     activateSaveBtn = true;
@@ -790,8 +749,9 @@ socket.on('newTempoBroadcast', function(data) {
 // <editor-fold>        <<<< UPDATE >>>> ----------------------- //
 function update(aMSPERFRAME, currTimeMS) {
   framect++;
-  dial1.animateFunc(currTimeMS);
-  dial2.animateFunc(currTimeMS);
+  dials.forEach((it, ix) => {
+    it.animateFunc(currTimeMS);
+  });
 }
 // </editor-fold>       END UPDATE ////////////////////////////////
 
@@ -820,38 +780,36 @@ function animationEngine(timestamp) {
 // <editor-fold> <<<< FUNCTIONS >>>> --------------------------------------- //
 
 // <editor-fold>       <<<< FUNCTION GET ORIGINAL IMAGE SIZE >>>> - //
-function getImageOgSize(url, callback) {
-  var newImg = new Image();
-  newImg.src = url;
-  newImg.onload = function() {
-    var imgSize = {
-      w: this.naturalWidth,
-      h: this.naturalHeight
-    };
-    if (typeof callback !== "undefined") callback(imgSize, url);
-  };
+function processImg(url) {
+  return new Promise((resolve, reject) => {
+    let img = new Image();
+    img.onload = () => resolve({
+      w: img.width,
+      h: img.height
+    });
+    img.onerror = reject;
+    img.src = url;
+  })
 }
 // </editor-fold>      END FUNCTION GET ORIGINAL IMAGE SIZE //////////
 
 // <editor-fold>       <<<< FUNCTION GET NOTATION SIZES >>>> ------ //
-function getNotationSizes(pathArr, emptyDestArr, activateButtonsFlag) {
-  pathArr.forEach(function(it, ix) {
-    getImageOgSize(it, function(size, url) {
+async function getImgDimensions(urls2DArr, array2DToPopulate) {
+  for (const [ix1, urlSet] of urls2DArr.entries()) {
+    for (const [ix2, url] of urlSet.entries()) {
+      var dimensions = await processImg(url);
       var sizeArr = [];
       sizeArr.push(url);
-      sizeArr.push(size.w);
-      sizeArr.push(size.h);
-      emptyDestArr.push(sizeArr);
-      // Activate Buttons after last image has been processed
-      if (activateButtonsFlag) {
-        if (ix == (pathArr.length - 1)) {
-          activateButtons = true;
-          //make Dial objects and generate static elements
-          makeDials();
-        }
+      sizeArr.push(dimensions.w);
+      sizeArr.push(dimensions.h);
+      array2DToPopulate[ix1].push(sizeArr);
+      if (ix1 == (urls2DArr.length - 1) && ix2 == (urlSet.length - 1)) {
+        activateButtons = true;
+        //make Dial objects and generate static elements
+        makeDials();
       }
-    });
-  });
+    }
+  }
 }
 // </editor-fold>      FUNCTION GET NOTATION SIZES ///////////////////
 
