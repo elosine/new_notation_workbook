@@ -111,8 +111,6 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   var midRadius = innerRadius + noteSpace;
   var defaultStrokeWidth = 4;
   var outerRadius = w / 2;
-  var currDeg = 120;
-  var lastDeg = currDeg;
   var tickBlinkTimes = []; //timer to blink ticks
   var notes = [];
   var noteBoxes = [];
@@ -123,6 +121,9 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   var beatsPerFrame = beatsPerSec / FRAMERATE;
   var degreesPerBeat = 360 / numTicks;
   var degreesPerFrame = degreesPerBeat * beatsPerFrame;
+  var initDeg = 270 - (5 * degreesPerBeat);
+  var currDeg = initDeg;
+  var lastDeg = currDeg;
   notationObj['newTempoFunc'] =
     function newTempo(newBPM) {
       var newBeatsPerSec = newBPM / 60;
@@ -158,8 +159,8 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   //// Dial ------------------------------- //
   var dialWidth = 2;
   var dial = document.createElementNS(SVG_NS, "line");
-  var ogx1 = outerRadius * Math.cos(rads(120)) + cx;
-  var ogy1 = outerRadius * Math.sin(rads(120)) + cy;
+  var ogx1 = outerRadius * Math.cos(rads(initDeg)) + cx;
+  var ogy1 = outerRadius * Math.sin(rads(initDeg)) + cy;
   dial.setAttributeNS(null, "x1", ogx1);
   dial.setAttributeNS(null, "y1", ogy1);
   dial.setAttributeNS(null, "x2", cx);
@@ -375,8 +376,8 @@ function mkCtrlPanel(panelid, w, h, title) {
   generateNotationButton.addEventListener("click", function() {
     if (activateButtons) {
       var newNotationArr = [];
-      dials.forEach( (it, ix) => {
-        newNotationArr.push( it.generateNotesArr() );
+      dials.forEach((it, ix) => {
+        newNotationArr.push(it.generateNotesArr());
       });
       socket.emit('createEvents', {
         eventDataArr: newNotationArr
@@ -399,7 +400,7 @@ function mkCtrlPanel(panelid, w, h, title) {
   loadPieceBtn.style.left = tSpace;
   loadPieceBtn.addEventListener("click", function() {
     if (activateButtons) {
-      // UPLOAD pitchChanges from file -------------------------------------- //
+      // UPLOAD pitchChanges from file ----------------------- //
       var input = document.createElement('input');
       input.type = 'file';
       input.onchange = e => {
@@ -407,24 +408,31 @@ function mkCtrlPanel(panelid, w, h, title) {
         reader.readAsText(e.srcElement.files[0]);
         var me = this;
         reader.onload = function() {
+
           var dataAsText = reader.result;
           var eventsArray = [];
-          var t1 = dataAsText.split(";");
-          for (var i = 0; i < t1.length; i++) {
-            if (t1[i] == -1) {
-              eventsArray.push(-1);
-            } else {
-              t2 = [];
-              var temparr = t1[i].split(',');
-              t2.push(temparr[0]);
-              t2.push(parseInt(temparr[1]));
-              t2.push(parseInt(temparr[2]));
-              eventsArray.push(t2);
+          var playersArr = dataAsText.split("newPlayerDataSet");
+          playersArr.forEach(function(it, ix) {
+            var t1 = it.split(";");
+            var thisPlayersEvents = [];
+            for (var i = 0; i < t1.length; i++) {
+              if (t1[i] == -1) {
+                thisPlayersEvents.push(-1);
+              } else {
+                t2 = [];
+                var temparr = t1[i].split(',');
+                t2.push(temparr[0]);
+                t2.push(parseInt(temparr[1]));
+                t2.push(parseInt(temparr[2]));
+                thisPlayersEvents.push(t2);
+              }
             }
-          }
+            eventsArray.push(thisPlayersEvents);
+          })
           socket.emit('loadPiece', {
             eventsArray: eventsArray
           });
+
         }
       }
       input.click();
@@ -524,41 +532,44 @@ function mkCtrlPanel(panelid, w, h, title) {
   saveBtn.addEventListener("click", function() {
     if (activateButtons) {
       if (activateSaveBtn) {
-        var t_eventData1 = dial1.notesArr;
-        var t_eventData2 = dial2.notesArr;
-        var eventDataStr1 = "";
-        var eventDataStr2 = "";
-        for (var i = 0; i < eventData1.length; i++) { // format as string to store in a file
-          if (i != (eventData.length - 1)) { //if it is not the last one
-            if (eventData[i] == -1) {
-              eventDataStr = eventDataStr + "-1;"; //not every tick has notation; if not = -1
-            } else {
-              for (var j = 0; j < eventData[i].length; j++) {
-                if (j == (eventData[i].length - 1)) {
-                  eventDataStr = eventDataStr + eventData[i][j].toString() + ";";
-                } else {
-                  eventDataStr = eventDataStr + eventData[i][j].toString() + ",";
+        var eventDataStr = "";
+        dials.forEach(function(it, ix) {
+          var eventData = it.notesArr;
+          for (var i = 0; i < eventData.length; i++) {
+            if (i != (eventData.length - 1)) { //if not last (last item will not have semicolon)
+              if (eventData[i] == -1) { // -1 means no notation for this tick
+                eventDataStr = eventDataStr + "-1;";
+              } else { // if it has notation
+                for (var j = 0; j < eventData[i].length; j++) {
+                  if (j == (eventData[i].length - 1)) {
+                    eventDataStr = eventDataStr + eventData[i][j].toString() + ";"; //semicolon for last one
+                  } else {
+                    eventDataStr = eventDataStr + eventData[i][j].toString() + ","; // , for all others
+                  }
                 }
               }
-            }
-          } else { //last one don't include semicolon
-            if (eventData[i] == -1) {
-              eventDataStr = eventDataStr + "-1";
-            } else {
-              for (var j = 0; j < eventData[i].length; j++) {
-                if (j == (eventData[i].length - 1)) {
-                  eventDataStr = eventDataStr + eventData[i][j].toString();
-                } else {
-                  eventDataStr = eventDataStr + eventData[i][j].toString() + ",";
+            } else { //last one don't include semicolon
+              if (eventData[i] == -1) {
+                eventDataStr = eventDataStr + "-1";
+              } else {
+                for (var j = 0; j < eventData[i].length; j++) {
+                  if (j == (eventData[i].length - 1)) {
+                    eventDataStr = eventDataStr + eventData[i][j].toString();
+                  } else {
+                    eventDataStr = eventDataStr + eventData[i][j].toString() + ",";
+                  }
                 }
               }
+              if (ix != (dials.length - 1)) {
+                eventDataStr = eventDataStr + "newPlayerDataSet"; //Mark start of new notation set for next player
+              }
             }
-
           }
-        }
+
+        });
         var t_now = new Date(ts.now());
         var month = t_now.getMonth() + 1;
-        var eventsFileName = "pulseCycle001_" + t_now.getFullYear() + "_" + month + "_" + t_now.getUTCDate() + "_" + t_now.getHours() + "-" + t_now.getMinutes();
+        var eventsFileName = "pulseCycle003_" + t_now.getFullYear() + "_" + month + "_" + t_now.getUTCDate() + "_" + t_now.getHours() + "-" + t_now.getMinutes();
         downloadStrToHD(eventDataStr, eventsFileName, 'text/plain');
       }
     }
@@ -574,9 +585,9 @@ function mkCtrlPanel(panelid, w, h, title) {
   tempoInputField.value = bpm;
   var inputW = (btnW - 15).toString() + "px";
   tempoInputField.style.width = inputW;
-  var inputH = (btnH - 25).toString() + "px";
+  var inputH = (btnH - 42).toString() + "px";
   tempoInputField.style.height = inputH;
-  tempoInputField.style.top = "0px";
+  tempoInputField.style.top = "-4px";
   var tSpace = (btnSpace * 6) - 3;
   tSpace = tSpace.toString() + "px";
   tempoInputField.style.left = tSpace;
@@ -598,7 +609,7 @@ function mkCtrlPanel(panelid, w, h, title) {
   var tempoInputFieldLbl = document.createElement("label");
   tempoInputFieldLbl.for = 'tempoInputField';
   tempoInputFieldLbl.style.left = tSpace;
-  tempoInputFieldLbl.style.top = "11px";
+  tempoInputFieldLbl.style.top = "-8px";
   tempoInputFieldLbl.className = 'input__label input__label--yoshiko';
 
 
@@ -606,6 +617,51 @@ function mkCtrlPanel(panelid, w, h, title) {
   tempoInputFieldLbl.innerHTML = "Tempo";
   ctrlPanelDiv.appendChild(tempoInputFieldLbl);
   // </editor-fold>    END CONTROL PANEL - TEMPO ///////////////////
+
+  // <editor-fold>     <<<< CONTROL PANEL - PLAYER # >>>> ------- //
+  var playerNumInputField = document.createElement("input");
+  playerNumInputField.type = 'text';
+  playerNumInputField.className = 'input__field--yoshiko';
+  playerNumInputField.id = 'playerNum';
+  playerNumInputField.value = 0;
+  var inputW = (btnW - 15).toString() + "px";
+  playerNumInputField.style.width = inputW;
+  var inputH = (btnH - 42).toString() + "px";
+  playerNumInputField.style.height = inputH;
+  playerNumInputField.style.top = "27px";
+  var tSpace = (btnSpace * 6) - 3;
+  tSpace = tSpace.toString() + "px";
+  playerNumInputField.style.left = tSpace;
+  playerNumInputField.addEventListener("click", function() {
+    playerNumInputField.focus();
+    playerNumInputField.select();
+  });
+  playerNumInputField.addEventListener("keyup", function(e) {
+    if (e.keyCode === 13) {
+      if (activateButtons) {
+        dials.forEach(function(it, ix) {
+          if (ix != parseInt(playerNumInputField.value)) {
+            it.panel.smallify();
+          } else {
+            it.panel.unsmallify();
+          }
+        })
+      }
+    }
+  });
+  ctrlPanelDiv.appendChild(playerNumInputField);
+  // TEMPO INPUT FIELD Label
+  var playerNumInputFieldLbl = document.createElement("label");
+  playerNumInputFieldLbl.for = 'playerNum';
+  playerNumInputFieldLbl.style.left = tSpace;
+  playerNumInputFieldLbl.style.top = "24px";
+  playerNumInputFieldLbl.className = 'input__label input__label--yoshiko';
+
+
+  // playerNumInputFieldLbl.style.color = "#a3d39c";
+  playerNumInputFieldLbl.innerHTML = "Player #";
+  ctrlPanelDiv.appendChild(playerNumInputFieldLbl);
+  // </editor-fold>    END CONTROL PANEL - PLAYER # ////////////////
 
   // <editor-fold>     <<<< CONTROL PANEL - jsPanel >>>> -------- //
   // jsPanel
@@ -682,7 +738,7 @@ socket.on('startpiecebroadcast', function(data) {
 // <editor-fold>       <<<< SOCKET IO - CREATE EVENTS >>>> ------ //
 socket.on('createEventsBroadcast', function(data) {
   var eventDataArr = data.eventDataArr;
-  eventDataArr.forEach( (it,ix) => {
+  eventDataArr.forEach((it, ix) => {
     dials[ix].generateNotation(it);
   });
   if (startPieceGate) {
@@ -718,8 +774,10 @@ socket.on('pauseBroadcast', function(data) {
 
 // <editor-fold>       <<<< SOCKET IO - LOAD PIECE >>>> --------- //
 socket.on('loadPieceBroadcast', function(data) {
-  dial.generatePiece(data.eventsArray);
-  eventData = data.eventsArray; // generated event data
+  var eventsArray = data.eventsArray;
+  eventsArray.forEach((it, ix) => {
+    dials[ix].generateNotation(it);
+  });
   if (startPieceGate) {
     activateStartBtn = true;
     activateSaveBtn = true;
@@ -737,7 +795,9 @@ socket.on('stopBroadcast', function(data) {
 
 // <editor-fold>       <<<< SOCKET IO - NEW TEMPO >>>> ---------- //
 socket.on('newTempoBroadcast', function(data) {
-  dial.newTempoFunc(data.newTempo);
+  dials.forEach(function(it, ix) {
+    it.newTempoFunc(data.newTempo);
+  })
 });
 // </editor-fold>      END SOCKET IO - NEW TEMPO ///////////////////
 
