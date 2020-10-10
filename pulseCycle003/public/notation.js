@@ -4,6 +4,8 @@ var framect = 0;
 var delta = 0.0;
 var lastFrameTimeMs = 0.0;
 var bpm = 87;
+var startTime;
+var clockTimeMS, clockTimeSec, clockTimeMin, clockTimeHrs;
 // TIMING ------------------------- >
 var FRAMERATE = 60.0;
 var MSPERFRAME = 1000.0 / FRAMERATE;
@@ -89,6 +91,7 @@ function makeDials() {
 function startClockSync() {
   var t_now = new Date(ts.now());
   lastFrameTimeMs = t_now.getTime();
+  startTime = lastFrameTimeMs;
 }
 // FUNCTION: startPiece ----------------------------------- //
 function startPiece() {
@@ -278,7 +281,7 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   // </editor-fold>     END DIAL NOTATION OBJECT - GENERATE NOTATION
 
   // <editor-fold>      <<<< DIAL NOTATION OBJECT - ANIMATION >>>> //
-  var tickBlinkDur = 150;
+  var tickBlinkDur = 40;
   var growTickLen = 5; //expand tick stroke-width by this amount
   // ---------------------------------------------------------- >
   var animateFunc = function(time) {
@@ -345,7 +348,7 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
 // </editor-fold> END DIAL NOTATION OBJECT ////////////////////////////////////
 
 
-// <editor-fold> <<<< CONTROL PANEL >>>> ------------------------------ //
+// <editor-fold> <<<< CONTROL PANEL >>>> ----------------------------------- //
 
 // <editor-fold>       <<<< CONTROL PANEL - INIT >>>> ----------- //
 var ctrlPanelH = 70;
@@ -708,6 +711,54 @@ function mkCtrlPanel(panelid, w, h, title) {
 // </editor-fold> END CONTROL PANEL ///////////////////////////////////////////
 
 
+// <editor-fold>     <<<< CLOCK >>>> --------------------------------------- //
+
+// <editor-fold>       <<<< FUNCTION CALC CLOCK >>>> -------------- //
+function calcClock(time) {
+  var timeMS = time - startTime;
+  clockTimeMS = timeMS%1000;
+  clockTimeSec = Math.floor(timeMS/1000)%60;
+  clockTimeMin = Math.floor(timeMS/60000)%60;
+  clockTimeHrs = Math.floor(timeMS/3600000);
+  document.getElementById('clockdiv').innerHTML =
+  pad(clockTimeMin,2) + ":" +
+  pad(clockTimeSec,2)
+}
+// </editor-fold>      END FUNCTION CALC CLOCK ///////////////////////
+// Clock Div
+var clockDiv = document.createElement("div");
+clockDiv.style.width = "41px";
+clockDiv.style.height = "20px";
+clockDiv.setAttribute("id", "clockdiv");
+clockDiv.style.backgroundColor = "yellow";
+// Clock Panel
+jsPanel.create({
+  position: 'right-top',
+  id: "clockPanel",
+  contentSize: "41 20",
+  header: 'auto-show-hide',
+  headerControls: {
+    minimize: 'remove',
+    // smallify: 'remove',
+    maximize: 'remove',
+    close: 'remove'
+  },
+  contentOverflow: 'hidden',
+  headerTitle: '<small>' + 'Clock' + '</small>',
+  theme: "light",
+  content: clockDiv,
+  resizeit: {
+    aspectRatio: 'content',
+    resize: function(panel, paneldata, e) {}
+  },
+  callback: function() {
+    tpanel = this;
+  }
+});
+
+// </editor-fold>    END CLOCK ////////////////////////////////////////////////
+
+
 // <editor-fold> <<<< SOCKET IO >>>> --------------------------------------- //
 
 // <editor-fold>       <<<< SOCKET IO - SETUP >>>> -------------- //
@@ -823,6 +874,8 @@ function draw() {}
 function animationEngine(timestamp) {
   var t_now = new Date(ts.now());
   t_lt = t_now.getTime() - timeAdjustment;
+  calcClock(t_lt);
+  console.log(clockTimeHrs + ":" + clockTimeMin + ":" + clockTimeSec + ":" + clockTimeMS);
   delta += t_lt - lastFrameTimeMs;
   lastFrameTimeMs = t_lt;
   while (delta >= MSPERFRAME) {
