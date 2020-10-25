@@ -16,7 +16,7 @@ var SVG_XLINK = 'http://www.w3.org/1999/xlink';
 // NOTATION SVGs ------------------ >
 var numDials = 2;
 var dials = [];
-//// DIAL Notation Data ///////////////////////////////////
+//// DIAL Notation Data ////////////////////////////////////
 //[url, w, h]
 var notationUrlsDimensions = [];
 for (var i = 0; i < numDials; i++) notationUrlsDimensions.push([]);
@@ -160,7 +160,7 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   svgCanvas.appendChild(ring);
   notationObj['ring'] = ring;
   //// Dial ------------------------------- //
-  var dialWidth = 2;
+  var dialWidth = 1;
   var dial = document.createElementNS(SVG_NS, "line");
   var ogx1 = outerRadius * Math.cos(rads(initDeg)) + cx;
   var ogy1 = outerRadius * Math.sin(rads(initDeg)) + cy;
@@ -178,7 +178,7 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   var ticks = [];
   var tickRadius = innerRadius - (defaultStrokeWidth / 2) - 3; // ticks offset from dial 3px like a watch
   var tickLength = 11;
-  var tickWidth = 2;
+  var tickWidth = 1;
   for (var i = 0; i < numTicks; i++) {
     var tickDeg = -90 + (degreesPerBeat * i); //-90 is 12 o'clock
     tickDegs.push(tickDeg); //store degrees for collision detection later
@@ -281,8 +281,8 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   // </editor-fold>     END DIAL NOTATION OBJECT - GENERATE NOTATION
 
   // <editor-fold>      <<<< DIAL NOTATION OBJECT - ANIMATION >>>> //
-  var tickBlinkDur = 40;
-  var growTickLen = 5; //expand tick stroke-width by this amount
+  var tickBlinkDur = 30;
+  var growTickLen = 12; //expand tick stroke-width by this amount
   // ---------------------------------------------------------- >
   var animateFunc = function(time) {
     // Animate Dial
