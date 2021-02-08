@@ -14,12 +14,13 @@ var timeAdjustment = 0;
 var SVG_NS = "http://www.w3.org/2000/svg";
 var SVG_XLINK = 'http://www.w3.org/1999/xlink';
 // NOTATION SVGs ------------------ >
-var numDials = 2;
+var numDials = 1;
 var dials = [];
 //// DIAL Notation Data ////////////////////////////////////
 //[url, w, h]
 var notationUrlsDimensions = [];
 for (var i = 0; i < numDials; i++) notationUrlsDimensions.push([]);
+// one dial
 var motivePaths = [
   [
     "/notation/quintuplet_accent.svg",
@@ -27,15 +28,25 @@ var motivePaths = [
     "/notation/eight_accent_1stPartial_27_34.svg",
     "/notation/triplet_accent_1st_partial_45_45.svg",
     "/notation/quarter_accent_12_35.svg"
-  ],
-  [
-    "/notation/quadruplet_accent.svg",
-    "/notation/eight_accent_2ndPartial_27_34.svg",
-    "/notation/eight_accent_1stPartial_27_34.svg",
-    "/notation/triplet_accent_1st_partial_45_45.svg",
-    "/notation/quarter_accent_12_35.svg"
   ]
 ];
+// two dials
+// var motivePaths = [
+//   [
+//     "/notation/quintuplet_accent.svg",
+//     "/notation/eight_accent_2ndPartial_27_34.svg",
+//     "/notation/eight_accent_1stPartial_27_34.svg",
+//     "/notation/triplet_accent_1st_partial_45_45.svg",
+//     "/notation/quarter_accent_12_35.svg"
+//   ],
+//   [
+//     "/notation/quadruplet_accent.svg",
+//     "/notation/eight_accent_2ndPartial_27_34.svg",
+//     "/notation/eight_accent_1stPartial_27_34.svg",
+//     "/notation/triplet_accent_1st_partial_45_45.svg",
+//     "/notation/quarter_accent_12_35.svg"
+//   ]
+// ];
 var motiveWeightingSets = [
   [0.13, 0.13, 0.13, 0.13, 0.42],
   [0.15, 0.3, 0.08, 0.08, 0.4]
@@ -61,7 +72,16 @@ var dialH = 360;
 
 
 // <editor-fold> <<<< START UP SEQUENCE >>>> ------------------------------- //
-
+//mkCtrlPanel()
+//getImgDimensions() => makeDials()
+// INIT --------------------------------------------------- //
+function init() { //run from html onload='init();'
+  // 01: MAKE CONTROL PANEL ---------------- >
+  controlPanel = mkCtrlPanel("ctrlPanel", dialW, ctrlPanelH, "Control Panel");
+  // 02: GET NOTATION SIZES ---------------- >
+  //need a motivePaths entry for every dial
+  getImgDimensions(motivePaths, notationUrlsDimensions);
+}
 // TIMESYNC ENGINE ---------------------------------------- //
 var tsServer;
 if (window.location.hostname == 'localhost') {
@@ -74,13 +94,6 @@ var ts = timesync.create({
   server: '/timesync',
   interval: 1000
 });
-// INIT --------------------------------------------------- //
-function init() {
-  // 01: MAKE CONTROL PANEL ---------------- >
-  controlPanel = mkCtrlPanel("ctrlPanel", dialW, ctrlPanelH, "Control Panel");
-  // 02: GET NOTATION SIZES ---------------- >
-  getImgDimensions(motivePaths, notationUrlsDimensions);
-}
 // 03: GENERATE STATIC ELEMENTS ---------------- >
 function makeDials() {
   for (var i = 0; i < numDials; i++) {
@@ -110,8 +123,24 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   var cx = w / 2;
   var cy = h / 2;
   var innerRadius = 70;
+  var tickLength = 11;
+  var tickWidth = 1;
   var noteSpace = 70;
   var midRadius = innerRadius + noteSpace;
+  var bbRadius = 10;
+  var bbStartY = midRadius;
+  var bbLandLineY = cy + innerRadius - 20;
+  var bbImpactY = bbLandLineY - bbRadius;
+  var bbLandLineR = 10;
+  var bbLandLineX1 = cx - bbLandLineR;
+  var bbLandLineX2 = cx + bbLandLineR;
+  var bbOffFrame = 0;
+  var bbDurFrames = 60;
+  var bbVelocity = 5;
+  var bbDescentLength = bbImpactY - bbStartY; //80 velocity has to into this whole
+  var bbDescentLengthFrames = bbDescentLength/bbVelocity;
+  var bbLeadTime;
+  var bbDir = 1;
   var defaultStrokeWidth = 4;
   var outerRadius = w / 2;
   var tickBlinkTimes = []; //timer to blink ticks
@@ -124,9 +153,15 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   var beatsPerFrame = beatsPerSec / FRAMERATE;
   var degreesPerBeat = 360 / numTicks;
   var degreesPerFrame = degreesPerBeat * beatsPerFrame;
+  var framesPerBeat = 1.0 / beatsPerFrame;
   var initDeg = 270 - (5 * degreesPerBeat);
   var currDeg = initDeg;
   var lastDeg = currDeg;
+  // 100 beats trial
+  var beatFrames = [];
+  for (var i = 0; i < 100; i++) {
+    beatFrames.push(Math.round(i * framesPerBeat) - bbDescentLengthFrames);
+  }
   notationObj['newTempoFunc'] =
     function newTempo(newBPM) {
       var newBeatsPerSec = newBPM / 60;
@@ -177,8 +212,6 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   //// Ticks ------------------------------- //
   var ticks = [];
   var tickRadius = innerRadius - (defaultStrokeWidth / 2) - 3; // ticks offset from dial 3px like a watch
-  var tickLength = 11;
-  var tickWidth = 1;
   for (var i = 0; i < numTicks; i++) {
     var tickDeg = -90 + (degreesPerBeat * i); //-90 is 12 o'clock
     tickDegs.push(tickDeg); //store degrees for collision detection later
@@ -199,6 +232,34 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
     ticks.push(tick);
   }
   notationObj['ticks'] = ticks;
+  //// Bouncing Ball ------------------------------- //
+  //bb landing line
+  var bbLandLineWidth = 2;
+  var bbLandLine = document.createElementNS(SVG_NS, "line");
+  bbLandLine.setAttributeNS(null, "x1", bbLandLineX1);
+  bbLandLine.setAttributeNS(null, "y1", bbLandLineY);
+  bbLandLine.setAttributeNS(null, "x2", bbLandLineX2);
+  bbLandLine.setAttributeNS(null, "y2", bbLandLineY);
+  bbLandLine.setAttributeNS(null, "stroke", "rgb(153,255,0)");
+  bbLandLine.setAttributeNS(null, "stroke-width", bbLandLineWidth);
+  var bbLandLineID = id + 'bbLandLine';
+  bbLandLine.setAttributeNS(null, "id", bbLandLineID);
+  svgCanvas.appendChild(bbLandLine);
+  notationObj['bbLandLine'] = bbLandLine;
+  //Create array of 4 balls
+  //Only visible x amount of time before
+  //bb landing line
+  var bb = document.createElementNS(SVG_NS, "circle");
+  bb.setAttributeNS(null, "cx", cx);
+  bb.setAttributeNS(null, "cy", bbStartY);
+  bb.setAttributeNS(null, "r", bbRadius); //set bb radius
+  bb.setAttributeNS(null, "stroke", "none");
+  bb.setAttributeNS(null, "fill", "rgb(153, 255, 0)");
+  var bbID = id + 'bb';
+  bb.setAttributeNS(null, "id", bbID);
+  bb.setAttributeNS(null, 'visibility', 'hidden');
+  svgCanvas.appendChild(bb);
+  notationObj['bouncingBall'] = bb;
   // </editor-fold>     END DIAL NOTATION OBJECT - STATIC ELEMENTS //
 
   // <editor-fold>      <<<< DIAL NOTATION OBJECT - GENERATE PIECE //
@@ -326,6 +387,15 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
         }
       }
     });
+    // Start Bouncing Ball Timer
+    for (var k = 0; k < beatFrames.length; k++) {
+      if (framect == beatFrames[k]) {
+        bb.setAttributeNS(null, 'cy', bbStartY)
+        bbOffFrame = framect + bbDurFrames;
+        bbDir = 1;
+        break;
+      }
+    }
     lastDeg = currDegMod;
     // Tick blink timer
     tickBlinkTimes.forEach(function(it, ix) {
@@ -339,6 +409,19 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
         }
       }
     })
+    // Bouncing Ball Animation
+    if (framect < bbOffFrame) {
+      bb.setAttributeNS(null, 'visibility', 'visible');
+      var bbCurrentY = parseInt(bb.getAttributeNS(null, 'cy'));
+      var bbNewY = bbCurrentY + (bbVelocity*bbDir);
+      if(bbNewY > bbImpactY){
+        bbDir = -1;
+      }
+      bb.setAttributeNS(null, 'cy', bbNewY)
+    }
+    else{
+      bb.setAttributeNS(null, 'visibility', 'hidden');
+    }
   }
   notationObj['animateFunc'] = animateFunc;
   return notationObj;
@@ -716,13 +799,13 @@ function mkCtrlPanel(panelid, w, h, title) {
 // <editor-fold>       <<<< FUNCTION CALC CLOCK >>>> -------------- //
 function calcClock(time) {
   var timeMS = time - startTime;
-  clockTimeMS = timeMS%1000;
-  clockTimeSec = Math.floor(timeMS/1000)%60;
-  clockTimeMin = Math.floor(timeMS/60000)%60;
-  clockTimeHrs = Math.floor(timeMS/3600000);
+  clockTimeMS = timeMS % 1000;
+  clockTimeSec = Math.floor(timeMS / 1000) % 60;
+  clockTimeMin = Math.floor(timeMS / 60000) % 60;
+  clockTimeHrs = Math.floor(timeMS / 3600000);
   document.getElementById('clockdiv').innerHTML =
-  pad(clockTimeMin,2) + ":" +
-  pad(clockTimeSec,2)
+    pad(clockTimeMin, 2) + ":" +
+    pad(clockTimeSec, 2)
 }
 // </editor-fold>      END FUNCTION CALC CLOCK ///////////////////////
 // Clock Div
@@ -875,7 +958,7 @@ function animationEngine(timestamp) {
   var t_now = new Date(ts.now());
   t_lt = t_now.getTime() - timeAdjustment;
   calcClock(t_lt);
-  console.log(clockTimeHrs + ":" + clockTimeMin + ":" + clockTimeSec + ":" + clockTimeMS);
+  // console.log(clockTimeHrs + ":" + clockTimeMin + ":" + clockTimeSec + ":" + clockTimeMS);
   delta += t_lt - lastFrameTimeMs;
   lastFrameTimeMs = t_lt;
   while (delta >= MSPERFRAME) {
