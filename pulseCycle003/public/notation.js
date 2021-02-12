@@ -3,7 +3,6 @@
 var framect = 0;
 var delta = 0.0;
 var lastFrameTimeMs = 0.0;
-var bpm = 87;
 var startTime;
 var clockTimeMS, clockTimeSec, clockTimeMin, clockTimeHrs;
 // TIMING ------------------------- >
@@ -14,22 +13,64 @@ var timeAdjustment = 0;
 var SVG_NS = "http://www.w3.org/2000/svg";
 var SVG_XLINK = 'http://www.w3.org/1999/xlink';
 // NOTATION SVGs ------------------ >
-var numDials = 1;
+var numDials = 4;
 var dials = [];
 //// DIAL Notation Data ////////////////////////////////////
 //[url, w, h]
 var notationUrlsDimensions = [];
+var motiveWeightingSets = [
+  [0.13, 0.13, 0.13, 0.13, 0.42],
+  [0.15, 0.3, 0.18, 0.28, 0.31],
+  [0.23, 0.07, 0.2, 0.11, 0.22],
+  [0.2, 0.22, 0.2, 0.11, 0.11]
+];
+var numTicksPerDial = [12, 11, 13, 9];
+var useNotationProbabilities = [0.36, 0.42, 0.33, 0.41];
+var bpms = [87, 87, 87, 87];
 for (var i = 0; i < numDials; i++) notationUrlsDimensions.push([]);
-// one dial
+// 4 dials
 var motivePaths = [
   [
-    "/notation/quintuplet_accent.svg",
     "/notation/eight_accent_2ndPartial_27_34.svg",
     "/notation/eight_accent_1stPartial_27_34.svg",
     "/notation/triplet_accent_1st_partial_45_45.svg",
-    "/notation/quarter_accent_12_35.svg"
+    "/notation/quarter_accent_12_35.svg",
+    "/notation/quadruplet_accent.svg"
+  ],
+  [
+    "/notation/eight_accent_2ndPartial_27_34.svg",
+    "/notation/eight_accent_1stPartial_27_34.svg",
+    "/notation/triplet_accent_1st_partial_45_45.svg",
+    "/notation/quarter_accent_12_35.svg",
+    "/notation/quadruplet_accent.svg"
+  ],
+  [
+    "/notation/eight_accent_2ndPartial_27_34.svg",
+    "/notation/eight_accent_1stPartial_27_34.svg",
+    "/notation/triplet_accent_1st_partial_45_45.svg",
+    "/notation/quarter_accent_12_35.svg",
+    "/notation/quadruplet_accent.svg"
+  ],
+  [
+    "/notation/eight_accent_2ndPartial_27_34.svg",
+    "/notation/eight_accent_1stPartial_27_34.svg",
+    "/notation/triplet_accent_1st_partial_45_45.svg",
+    "/notation/quarter_accent_12_35.svg",
+    "/notation/quadruplet_accent.svg"
   ]
 ];
+
+// one dial
+// var motivePaths = [
+//   [
+//     "/notation/quintuplet_accent.svg",
+//     "/notation/eight_accent_2ndPartial_27_34.svg",
+//     "/notation/eight_accent_1stPartial_27_34.svg",
+//     "/notation/triplet_accent_1st_partial_45_45.svg",
+//     "/notation/quarter_accent_12_35.svg",
+//     "/notation/quadruplet_accent.svg"
+//   ]
+// ];
 // two dials
 // var motivePaths = [
 //   [
@@ -47,12 +88,7 @@ var motivePaths = [
 //     "/notation/quarter_accent_12_35.svg"
 //   ]
 // ];
-var motiveWeightingSets = [
-  [0.13, 0.13, 0.13, 0.13, 0.42],
-  [0.15, 0.3, 0.08, 0.08, 0.4]
-];
-var numTicksPerDial = [12, 11];
-var useNotationProbabilities = [0.36, 0.42]
+
 // CONTROL PANEL ------------------ >
 var controlPanel;
 // BUTTONS ------------------------ >
@@ -97,7 +133,7 @@ var ts = timesync.create({
 // 03: GENERATE STATIC ELEMENTS ---------------- >
 function makeDials() {
   for (var i = 0; i < numDials; i++) {
-    dials.push(mkDialNO(i, dialW, dialH, numTicksPerDial[i], bpm, notationUrlsDimensions[i], useNotationProbabilities[i], motiveWeightingSets[i]));
+    dials.push(mkDialNO(i, dialW, dialH, numTicksPerDial[i], bpms[i], notationUrlsDimensions[i], useNotationProbabilities[i], motiveWeightingSets[i]));
   }
 }
 // FUNCTION: startClockSync ------------------------------- //
@@ -128,17 +164,19 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   var noteSpace = 70;
   var midRadius = innerRadius + noteSpace;
   var bbRadius = 10;
-  var bbStartY = midRadius;
   var bbLandLineY = cy + innerRadius - 20;
   var bbImpactY = bbLandLineY - bbRadius;
+  var bbDescentLengthFrames = 13;
+  var bbDescentLengthPx = (bbDescentLengthFrames * (bbDescentLengthFrames + 1)) / 2;
+  var bbStartY = bbImpactY - bbDescentLengthPx; // 78 accomodates acceleration 1+2+3+4...12
   var bbLandLineR = 10;
   var bbLandLineX1 = cx - bbLandLineR;
   var bbLandLineX2 = cx + bbLandLineR;
   var bbOffFrame = 0;
-  var bbDurFrames = 60;
-  var bbVelocity = 5;
-  var bbDescentLength = bbImpactY - bbStartY; //80 velocity has to into this whole
-  var bbDescentLengthFrames = bbDescentLength/bbVelocity;
+  var bbDurFrames = 18;
+  var bbVelocity = 1;
+  var bbAccel = 1;
+  // var bbDescentLength = bbImpactY - bbStartY; //80 velocity has to into this whole
   var bbLeadTime;
   var bbDir = 1;
   var defaultStrokeWidth = 4;
@@ -158,9 +196,9 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
   var currDeg = initDeg;
   var lastDeg = currDeg;
   // 100 beats trial
-  var beatFrames = [];
-  for (var i = 0; i < 100; i++) {
-    beatFrames.push(Math.round(i * framesPerBeat) - bbDescentLengthFrames);
+  var bbBeatFrames = [];
+  for (var i = 0; i < 3000; i++) {
+    bbBeatFrames.push(Math.round(i * framesPerBeat) - bbDescentLengthFrames);
   }
   notationObj['newTempoFunc'] =
     function newTempo(newBPM) {
@@ -388,8 +426,10 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
       }
     });
     // Start Bouncing Ball Timer
-    for (var k = 0; k < beatFrames.length; k++) {
-      if (framect == beatFrames[k]) {
+    for (var k = 0; k < bbBeatFrames.length; k++) {
+      if (framect == bbBeatFrames[k]) {
+        bbVelocity = 1;
+        bbAccel = 1;
         bb.setAttributeNS(null, 'cy', bbStartY)
         bbOffFrame = framect + bbDurFrames;
         bbDir = 1;
@@ -413,13 +453,15 @@ function mkDialNO(ix, w, h, numTicks, ibpm, motiveUrlSzSet, useNotationProbabili
     if (framect < bbOffFrame) {
       bb.setAttributeNS(null, 'visibility', 'visible');
       var bbCurrentY = parseInt(bb.getAttributeNS(null, 'cy'));
-      var bbNewY = bbCurrentY + (bbVelocity*bbDir);
-      if(bbNewY > bbImpactY){
+      bbVelocity = bbVelocity + bbAccel;
+      var bbNewY = bbCurrentY + (bbVelocity * bbDir);
+      if (bbNewY > bbImpactY) {
         bbDir = -1;
+        bbVelocity = 10;
+        bbAccel = -1;
       }
       bb.setAttributeNS(null, 'cy', bbNewY)
-    }
-    else{
+    } else {
       bb.setAttributeNS(null, 'visibility', 'hidden');
     }
   }
@@ -668,7 +710,7 @@ function mkCtrlPanel(panelid, w, h, title) {
   tempoInputField.type = 'text';
   tempoInputField.className = 'input__field--yoshiko';
   tempoInputField.id = 'tempoInputField';
-  tempoInputField.value = bpm;
+  // tempoInputField.value = bpm;
   var inputW = (btnW - 15).toString() + "px";
   tempoInputField.style.width = inputW;
   var inputH = (btnH - 42).toString() + "px";
